@@ -6,19 +6,140 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+CLAUDE.md
+PROJECT_SUMMARY.md
+# Dependencies
 node_modules
+backend/venv
+backend/env
+backend/.env
+backend/venv/
+backend/env/
+backend/.env/
+
+# Build outputs
 dist
 dist-ssr
 *.local
+build
+*.build
+*.build/
 
-# Editor directories and files
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.hypothesis/
+.pytest_cache/
+.cpython-*/
+
+# ML models and checkpoints
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.ckpt
+*.pt
+*.pth
+models/
+models/*
+checkpoints/
+checkpoints/*
+saved_models/
+saved_models/*
+*.model
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
+
+# IDE directories and files
 .vscode/*
 !.vscode/extensions.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/workspace.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.bak
+*.backup
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Output files
+output/
+outputs/
+results/
+logs/
+*.csv
+*.json
+!src/services/
+!backend/Dataset/extracted_data/*.csv
+
+# Data files (large datasets)
+*.arff
+*.data
+*.dat
+!backend/Dataset/*.arff
+!backend/Dataset/*.info.txt
+
+# OS and system files
+desktop.ini
+*.lnk
+*.exe
+*.dll
+*.so
+*.dylib
