@@ -1,0 +1,337 @@
+
+(venv) X:\file\FAST_API\CKD-Ensemble-Classifier>python -m backend.run
+INFO:     Will watch for changes in these directories: ['X:\\file\\FAST_API\\CKD-Ensemble-Classifier']
+INFO:     Uvicorn running on http://0.0.0.0:8007 (Press CTRL+C to quit)
+INFO:     Started reloader process [14476] using WatchFiles
+INFO:     Started server process [1672]
+INFO:     Waiting for application startup.
+2026-04-15 23:44:45,358 [INFO] backend.api.main: ==================================================
+2026-04-15 23:44:45,358 [INFO] backend.api.main:   Starting CKD Ensemble Classifier API v3.0
+2026-04-15 23:44:45,358 [INFO] backend.api.main: ==================================================
+2026-04-15 23:44:45,370 [INFO] backend.api.routers: ✓ Preprocessor loaded from X:\file\FAST_API\CKD-Ensemble-Classifier\backend\models\preprocessor.joblib
+2026-04-15 23:44:45,372 [WARNING] backend.api.routers:   ✗ Variant 'all_features' not found — skipping
+2026-04-15 23:44:45,372 [WARNING] backend.api.routers:   ✗ Variant 'rfe' not found — skipping
+2026-04-15 23:44:45,373 [WARNING] backend.api.routers:   ✗ Variant 'boruta' not found — skipping
+2026-04-15 23:44:45,373 [INFO] backend.api.routers: Total: 0 variants, 0 models loaded
+2026-04-15 23:44:45,373 [INFO] backend.api.main: API ready on port 8007
+INFO:     Application startup complete.
+2026-04-15 23:44:52,288 [INFO] backend.api.routers: Training pipeline triggered via API...
+2026-04-15 23:44:52,289 [INFO] backend.ml_core.pipeline: ============================================================
+2026-04-15 23:44:52,291 [INFO] backend.ml_core.pipeline:   CKD ENSEMBLE CLASSIFIER — FULL PIPELINE
+2026-04-15 23:44:52,291 [INFO] backend.ml_core.pipeline:   Training 3 variants × 8 models = 24 models total
+2026-04-15 23:44:52,291 [INFO] backend.ml_core.pipeline: ============================================================
+2026-04-15 23:44:52,292 [INFO] backend.ml_core.pipeline:
+[1/10] Loading and cleaning data...
+2026-04-15 23:44:52,292 [INFO] backend.ml_core.preprocess: Loading CSV from X:\file\FAST_API\CKD-Ensemble-Classifier\backend\dataset\chronic_kidney_disease.csv
+2026-04-15 23:44:52,454 [INFO] backend.ml_core.preprocess: Loaded 400 samples, 25 columns
+2026-04-15 23:44:52,462 [INFO] backend.ml_core.preprocess: Missing values:
+age        9
+bp        12
+sg        47
+al        46
+su        49
+rbc      152
+pc        65
+pcc        4
+ba         4
+bgr       44
+bu        19
+sc        17
+sod       87
+pot       88
+hemo      52
+pcv       71
+wbcc     106
+rbcc     131
+htn        2
+dm         3
+cad        2
+appet      1
+pe         1
+ane        1
+dtype: int64
+2026-04-15 23:44:52,464 [INFO] backend.ml_core.pipeline:   Samples: 400, Features: 24
+2026-04-15 23:44:52,468 [INFO] backend.ml_core.pipeline:   Class distribution: {1: 250, 0: 150}
+2026-04-15 23:44:52,468 [INFO] backend.ml_core.pipeline:
+[2/10] Generating EDA KDE plots...
+2026-04-15 23:44:52,476 [INFO] backend.ml_core.evaluate: Generating KDE plots...
+2026-04-15 23:44:55,396 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\kde_distributions.png
+2026-04-15 23:44:55,396 [INFO] backend.ml_core.pipeline:
+[3/10] Preprocessing...
+2026-04-15 23:44:55,397 [INFO] backend.ml_core.preprocess: Fitting CKD preprocessor...
+2026-04-15 23:44:55,397 [INFO] backend.ml_core.preprocess:   Nominal cols (13): ['sg', 'al', 'su', 'rbc', 'pc', 'pcc', 'ba', 'htn', 'dm', 'cad', 'appet', 'pe', 'ane']
+2026-04-15 23:44:55,397 [INFO] backend.ml_core.preprocess:   Numerical cols (11): ['age', 'bp', 'bgr', 'bu', 'sc', 'sod', 'pot', 'hemo', 'pcv', 'wbcc', 'rbcc']
+2026-04-15 23:44:55,483 [INFO] backend.ml_core.preprocess: Preprocessor fitting complete.
+2026-04-15 23:44:55,509 [INFO] backend.ml_core.pipeline:   Processed shape: (400, 24)
+2026-04-15 23:44:55,527 [INFO] backend.ml_core.pipeline:   Preprocessed dataset saved → X:\file\FAST_API\CKD-Ensemble-Classifier\backend\dataset\preprocessed_ckd_dataset.csv
+2026-04-15 23:44:55,550 [INFO] backend.ml_core.preprocess: Preprocessor saved → X:\file\FAST_API\CKD-Ensemble-Classifier\backend\models\preprocessor.joblib
+2026-04-15 23:44:55,550 [INFO] backend.ml_core.pipeline:
+[4/10] Train/test split (90/10, stratified)...
+2026-04-15 23:44:55,554 [INFO] backend.ml_core.pipeline:   Train: 360, Test: 40
+2026-04-15 23:44:55,555 [INFO] backend.ml_core.pipeline:   Train class dist: {1: 225, 0: 135}
+2026-04-15 23:44:55,556 [INFO] backend.ml_core.pipeline:   Test  class dist: {1: 25, 0: 15}
+2026-04-15 23:44:55,556 [INFO] backend.ml_core.pipeline:
+[5/10] Applying SMOTE to training set...
+2026-04-15 23:44:58,074 [INFO] backend.ml_core.pipeline:   Borderline-SMOTE: 360 → 450 samples
+2026-04-15 23:44:58,075 [INFO] backend.ml_core.pipeline:   Balanced dist: {1: 225, 0: 225}
+2026-04-15 23:44:58,075 [INFO] backend.ml_core.pipeline:
+[6/10] Feature selection...
+2026-04-15 23:44:58,076 [INFO] backend.ml_core.feature_selection: Running RFE selection (top 12 features)...
+2026-04-15 23:44:58,267 [INFO] backend.ml_core.feature_selection: RFE selected 12 features: ['bgr', 'sc', 'hemo', 'pcv', 'rbcc', 'sg', 'rbc', 'pc', 'htn', 'dm', 'appet', 'pe']
+2026-04-15 23:44:58,267 [INFO] backend.ml_core.feature_selection: Feature rankings: {'age': 6, 'bp': 9, 'bgr': 1, 'bu': 7, 'sc': 1, 'sod': 2, 'pot': 3, 'hemo': 1, 'pcv': 1, 'wbcc': 5, 'rbcc': 1, 'sg': 1, 'al': 4, 'su': 11, 'rbc': 1, 'pc': 1, 'pcc': 12, 'ba': 10, 'htn': 1, 'dm': 1, 'cad': 13, 'appet': 1, 'pe': 1, 'ane': 8}
+2026-04-15 23:44:58,268 [INFO] backend.ml_core.feature_selection: Running Boruta feature selection...
+2026-04-15 23:45:35,877 [INFO] backend.ml_core.feature_selection: Boruta confirmed 20 features: ['age', 'bp', 'bgr', 'bu', 'sc', 'sod', 'pot', 'hemo', 'pcv', 'wbcc', 'rbcc', 'sg', 'al', 'rbc', 'pc', 'htn', 'dm', 'appet', 'pe', 'ane']
+2026-04-15 23:45:35,878 [INFO] backend.ml_core.feature_selection: Boruta tentative 1 features: ['su']
+2026-04-15 23:45:35,878 [INFO] backend.ml_core.feature_selection: Boruta total selected: 21 features
+2026-04-15 23:45:35,878 [INFO] backend.ml_core.pipeline:   All features: 24 features
+2026-04-15 23:45:35,878 [INFO] backend.ml_core.pipeline:   RFE features: 12 → ['bgr', 'sc', 'hemo', 'pcv', 'rbcc', 'sg', 'rbc', 'pc', 'htn', 'dm', 'appet', 'pe']
+2026-04-15 23:45:35,879 [INFO] backend.ml_core.pipeline:   Boruta features: 21 → ['age', 'bp', 'bgr', 'bu', 'sc', 'sod', 'pot', 'hemo', 'pcv', 'wbcc', 'rbcc', 'sg', 'al', 'rbc', 'pc', 'htn', 'dm', 'appet', 'pe', 'ane', 'su']
+2026-04-15 23:45:35,879 [INFO] backend.ml_core.pipeline:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-04-15 23:45:35,879 [INFO] backend.ml_core.pipeline:   VARIANT: ALL_FEATURES (24 features)
+2026-04-15 23:45:35,879 [INFO] backend.ml_core.pipeline: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-04-15 23:45:35,887 [INFO] backend.ml_core.pipeline:
+  [7] Training 8 models on all_features...
+2026-04-15 23:45:35,888 [INFO] backend.ml_core.train: ============================================================
+2026-04-15 23:45:35,888 [INFO] backend.ml_core.train: TRAINING ALL ENSEMBLE MODELS
+2026-04-15 23:45:35,888 [INFO] backend.ml_core.train: ============================================================
+2026-04-15 23:45:35,888 [INFO] backend.ml_core.train:   Training Random Forest...
+2026-04-15 23:46:43,591 [INFO] backend.ml_core.train:     Best params: {'bootstrap': False, 'max_features': 'log2', 'min_samples_leaf': 1, 'min_samples_split': 5, 'n_estimators': 160}
+2026-04-15 23:46:43,591 [INFO] backend.ml_core.train:     Best CV score: 1.0000
+2026-04-15 23:46:43,591 [INFO] backend.ml_core.train:   ✓ Random_Forest trained successfully
+2026-04-15 23:46:43,592 [INFO] backend.ml_core.train:   Training AdaBoost...
+2026-04-15 23:46:55,025 [INFO] backend.ml_core.train:     Best params: {'n_estimators': 75, 'learning_rate': 1.0}
+2026-04-15 23:46:55,032 [INFO] backend.ml_core.train:     Best CV score: 0.9911
+2026-04-15 23:46:55,037 [INFO] backend.ml_core.train:   ✓ AdaBoost trained successfully
+2026-04-15 23:46:55,047 [INFO] backend.ml_core.train:   Training GBDT...
+2026-04-15 23:47:52,467 [INFO] backend.ml_core.train:     Best params: {'learning_rate': 0.03304614904851916, 'max_depth': 4, 'min_samples_leaf': 20, 'n_estimators': 306, 'subsample': 0.8282623055075649}
+2026-04-15 23:47:52,468 [INFO] backend.ml_core.train:     Best CV score: 0.9978
+2026-04-15 23:47:52,468 [INFO] backend.ml_core.train:   ✓ GBDT trained successfully
+2026-04-15 23:47:52,468 [INFO] backend.ml_core.train:   Training Voting (SVM + KNN)...
+2026-04-15 23:47:53,183 [INFO] backend.ml_core.train:     SVM best: {'C': 3.845401188473625, 'gamma': 'scale', 'kernel': 'linear'}
+2026-04-15 23:47:53,816 [INFO] backend.ml_core.train:     KNN best: {'algorithm': 'kd_tree', 'n_neighbors': 4, 'weights': 'distance'}
+2026-04-15 23:47:53,834 [INFO] backend.ml_core.train:   ✓ Voting_Soft trained successfully
+2026-04-15 23:47:53,834 [INFO] backend.ml_core.train:   Training XGBoost...
+2026-04-15 23:48:02,377 [INFO] backend.ml_core.train:     Best params: {'colsample_bytree': 0.610167650697638, 'learning_rate': 0.019710228429397403, 'max_depth': 8, 'min_child_weight': 1, 'n_estimators': 663, 'subsample': 0.8253102287905535}
+2026-04-15 23:48:02,377 [INFO] backend.ml_core.train:     Best CV score: 0.9933
+2026-04-15 23:48:02,377 [INFO] backend.ml_core.train:   ✓ XGBoost trained successfully
+2026-04-15 23:48:02,378 [INFO] backend.ml_core.train:   Training LightGBM...
+2026-04-15 23:48:14,658 [INFO] backend.ml_core.train:     Best params: {'colsample_bytree': 0.786705157299192, 'learning_rate': 0.25, 'max_depth': 4, 'n_estimators': 234, 'num_leaves': 40, 'subsample': 0.7801997007878172}
+2026-04-15 23:48:14,659 [INFO] backend.ml_core.train:     Best CV score: 0.9956
+2026-04-15 23:48:14,659 [INFO] backend.ml_core.train:   ✓ LightGBM trained successfully
+2026-04-15 23:48:14,659 [INFO] backend.ml_core.train:   Training Stacking (RF + SVM + KNN → LogReg meta)...
+2026-04-15 23:48:16,134 [INFO] backend.ml_core.train:     Stacking trained with 3 base estimators + LogReg meta-learner
+2026-04-15 23:48:16,134 [INFO] backend.ml_core.train:   ✓ Stacking trained successfully
+2026-04-15 23:48:16,134 [INFO] backend.ml_core.train:   Training Bagging (DecisionTree base)...
+2026-04-15 23:48:39,061 [INFO] backend.ml_core.train:     Best params: {'bootstrap': True, 'bootstrap_features': True, 'max_features': 0.8982714934301164, 'max_samples': 0.5917173949330818, 'n_estimators': 80}
+2026-04-15 23:48:39,062 [INFO] backend.ml_core.train:     Best CV score: 0.9911
+2026-04-15 23:48:39,062 [INFO] backend.ml_core.train:   ✓ Bagging trained successfully
+2026-04-15 23:48:39,062 [INFO] backend.ml_core.train:
+Total models trained: 8
+2026-04-15 23:48:39,062 [INFO] backend.ml_core.pipeline:
+  [8] Evaluating on test set...
+2026-04-15 23:48:39,062 [INFO] backend.ml_core.evaluate: Evaluating models on test set...
+2026-04-15 23:48:39,167 [INFO] backend.ml_core.evaluate:   Random_Forest: Acc=1.0, Prec=1.0, Rec=1.0, F1=1.0, AUC=1.0
+2026-04-15 23:48:39,209 [INFO] backend.ml_core.evaluate:   AdaBoost: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:48:39,229 [INFO] backend.ml_core.evaluate:   GBDT: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:48:39,250 [INFO] backend.ml_core.evaluate:   Voting_Soft: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:48:39,283 [INFO] backend.ml_core.evaluate:   XGBoost: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:48:39,305 [INFO] backend.ml_core.evaluate:   LightGBM: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:48:39,415 [INFO] backend.ml_core.evaluate:   Stacking: Acc=1.0, Prec=1.0, Rec=1.0, F1=1.0, AUC=1.0
+2026-04-15 23:48:39,543 [INFO] backend.ml_core.evaluate:   Bagging: Acc=1.0, Prec=1.0, Rec=1.0, F1=1.0, AUC=1.0
+2026-04-15 23:48:39,543 [INFO] backend.ml_core.evaluate: Generating confusion matrices...
+2026-04-15 23:48:39,763 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_Random_Forest.png
+2026-04-15 23:48:39,941 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_AdaBoost.png
+2026-04-15 23:48:40,118 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_GBDT.png
+2026-04-15 23:48:40,303 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_Voting_Soft.png
+2026-04-15 23:48:40,508 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_XGBoost.png
+2026-04-15 23:48:40,688 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_LightGBM.png
+2026-04-15 23:48:40,916 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_Stacking.png
+2026-04-15 23:48:41,336 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\cm_Bagging.png
+2026-04-15 23:48:41,336 [INFO] backend.ml_core.evaluate: Generating ROC curves...
+2026-04-15 23:48:41,836 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\roc_curves.png
+2026-04-15 23:48:41,836 [INFO] backend.ml_core.evaluate: Generating comparison bar charts...
+2026-04-15 23:48:42,148 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\comparison_accuracy.png
+2026-04-15 23:48:42,337 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\comparison_precision.png
+2026-04-15 23:48:42,524 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\comparison_recall.png
+2026-04-15 23:48:42,706 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\comparison_f1_score.png
+2026-04-15 23:48:42,894 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\comparison_auc_roc.png
+2026-04-15 23:48:43,162 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\all_features\comparison_all_metrics.png
+2026-04-15 23:48:43,166 [INFO] backend.ml_core.evaluate:   Metrics CSV saved → X:\file\FAST_API\CKD-Ensemble-Classifier\backend\models\all_features\evaluation_metrics.csv
+2026-04-15 23:48:43,167 [INFO] backend.ml_core.pipeline:
+  [9] Saving all_features models...
+2026-04-15 23:48:43,167 [INFO] backend.ml_core.pipeline:     Best: Random_Forest (AUC=1.0000)
+2026-04-15 23:48:43,484 [INFO] backend.ml_core.pipeline:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-04-15 23:48:43,485 [INFO] backend.ml_core.pipeline:   VARIANT: RFE (12 features)
+2026-04-15 23:48:43,485 [INFO] backend.ml_core.pipeline: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-04-15 23:48:43,491 [INFO] backend.ml_core.pipeline:
+  [7] Training 8 models on rfe...
+2026-04-15 23:48:43,491 [INFO] backend.ml_core.train: ============================================================
+2026-04-15 23:48:43,491 [INFO] backend.ml_core.train: TRAINING ALL ENSEMBLE MODELS
+2026-04-15 23:48:43,492 [INFO] backend.ml_core.train: ============================================================
+2026-04-15 23:48:43,492 [INFO] backend.ml_core.train:   Training Random Forest...
+2026-04-15 23:49:53,754 [INFO] backend.ml_core.train:     Best params: {'bootstrap': True, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 8, 'n_estimators': 190}
+2026-04-15 23:49:53,754 [INFO] backend.ml_core.train:     Best CV score: 1.0000
+2026-04-15 23:49:53,754 [INFO] backend.ml_core.train:   ✓ Random_Forest trained successfully
+2026-04-15 23:49:53,754 [INFO] backend.ml_core.train:   Training AdaBoost...
+2026-04-15 23:50:06,458 [INFO] backend.ml_core.train:     Best params: {'n_estimators': 90, 'learning_rate': 1.0}
+2026-04-15 23:50:06,458 [INFO] backend.ml_core.train:     Best CV score: 0.9956
+2026-04-15 23:50:06,459 [INFO] backend.ml_core.train:   ✓ AdaBoost trained successfully
+2026-04-15 23:50:06,459 [INFO] backend.ml_core.train:   Training GBDT...
+2026-04-15 23:50:54,282 [INFO] backend.ml_core.train:     Best params: {'learning_rate': 0.06331731119758383, 'max_depth': 4, 'min_samples_leaf': 12, 'n_estimators': 406, 'subsample': 0.9040922615763338}
+2026-04-15 23:50:54,282 [INFO] backend.ml_core.train:     Best CV score: 0.9978
+2026-04-15 23:50:54,283 [INFO] backend.ml_core.train:   ✓ GBDT trained successfully
+2026-04-15 23:50:54,283 [INFO] backend.ml_core.train:   Training Voting (SVM + KNN)...
+2026-04-15 23:50:54,832 [INFO] backend.ml_core.train:     SVM best: {'C': 8.424426408004217, 'gamma': 'auto', 'kernel': 'rbf'}
+2026-04-15 23:50:55,237 [INFO] backend.ml_core.train:     KNN best: {'algorithm': 'kd_tree', 'n_neighbors': 4, 'weights': 'distance'}
+2026-04-15 23:50:55,250 [INFO] backend.ml_core.train:   ✓ Voting_Soft trained successfully
+2026-04-15 23:50:55,251 [INFO] backend.ml_core.train:   Training XGBoost...
+2026-04-15 23:51:01,753 [INFO] backend.ml_core.train:     Best params: {'colsample_bytree': 0.8469926038510867, 'learning_rate': 0.06504878444394528, 'max_depth': 10, 'min_child_weight': 1, 'n_estimators': 574, 'subsample': 0.8447411578889518}
+2026-04-15 23:51:01,754 [INFO] backend.ml_core.train:     Best CV score: 0.9911
+2026-04-15 23:51:01,754 [INFO] backend.ml_core.train:   ✓ XGBoost trained successfully
+2026-04-15 23:51:01,754 [INFO] backend.ml_core.train:   Training LightGBM...
+2026-04-15 23:51:10,474 [INFO] backend.ml_core.train:     Best params: {'colsample_bytree': 0.8469926038510867, 'learning_rate': 0.1, 'max_depth': 7, 'n_estimators': 352, 'num_leaves': 68, 'subsample': 0.8099098641033556}
+2026-04-15 23:51:10,474 [INFO] backend.ml_core.train:     Best CV score: 0.9978
+2026-04-15 23:51:10,474 [INFO] backend.ml_core.train:   ✓ LightGBM trained successfully
+2026-04-15 23:51:10,474 [INFO] backend.ml_core.train:   Training Stacking (RF + SVM + KNN → LogReg meta)...
+2026-04-15 23:51:11,979 [INFO] backend.ml_core.train:     Stacking trained with 3 base estimators + LogReg meta-learner
+2026-04-15 23:51:11,979 [INFO] backend.ml_core.train:   ✓ Stacking trained successfully
+2026-04-15 23:51:11,979 [INFO] backend.ml_core.train:   Training Bagging (DecisionTree base)...
+2026-04-15 23:51:33,330 [INFO] backend.ml_core.train:     Best params: {'bootstrap': True, 'bootstrap_features': True, 'max_features': 0.5370223258670452, 'max_samples': 0.6792328642721364, 'n_estimators': 90}
+2026-04-15 23:51:33,331 [INFO] backend.ml_core.train:     Best CV score: 1.0000
+2026-04-15 23:51:33,331 [INFO] backend.ml_core.train:   ✓ Bagging trained successfully
+2026-04-15 23:51:33,331 [INFO] backend.ml_core.train:
+Total models trained: 8
+2026-04-15 23:51:33,333 [INFO] backend.ml_core.pipeline:
+  [8] Evaluating on test set...
+2026-04-15 23:51:33,333 [INFO] backend.ml_core.evaluate: Evaluating models on test set...
+2026-04-15 23:51:33,460 [INFO] backend.ml_core.evaluate:   Random_Forest: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:51:33,507 [INFO] backend.ml_core.evaluate:   AdaBoost: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:51:33,521 [INFO] backend.ml_core.evaluate:   GBDT: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:51:33,544 [INFO] backend.ml_core.evaluate:   Voting_Soft: Acc=0.95, Prec=1.0, Rec=0.92, F1=0.9583, AUC=1.0
+2026-04-15 23:51:33,578 [INFO] backend.ml_core.evaluate:   XGBoost: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:51:33,599 [INFO] backend.ml_core.evaluate:   LightGBM: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:51:33,711 [INFO] backend.ml_core.evaluate:   Stacking: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:51:33,817 [INFO] backend.ml_core.evaluate:   Bagging: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:51:33,818 [INFO] backend.ml_core.evaluate: Generating confusion matrices...
+2026-04-15 23:51:34,038 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_Random_Forest.png
+2026-04-15 23:51:34,209 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_AdaBoost.png
+2026-04-15 23:51:34,365 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_GBDT.png
+2026-04-15 23:51:34,530 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_Voting_Soft.png
+2026-04-15 23:51:34,744 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_XGBoost.png
+2026-04-15 23:51:35,018 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_LightGBM.png
+2026-04-15 23:51:35,237 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_Stacking.png
+2026-04-15 23:51:35,521 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\cm_Bagging.png
+2026-04-15 23:51:35,521 [INFO] backend.ml_core.evaluate: Generating ROC curves...
+2026-04-15 23:51:36,118 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\roc_curves.png
+2026-04-15 23:51:36,118 [INFO] backend.ml_core.evaluate: Generating comparison bar charts...
+2026-04-15 23:51:36,311 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\comparison_accuracy.png
+2026-04-15 23:51:36,526 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\comparison_precision.png
+2026-04-15 23:51:36,721 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\comparison_recall.png
+2026-04-15 23:51:36,906 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\comparison_f1_score.png
+2026-04-15 23:51:37,094 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\comparison_auc_roc.png
+2026-04-15 23:51:37,366 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\rfe\comparison_all_metrics.png
+2026-04-15 23:51:37,370 [INFO] backend.ml_core.evaluate:   Metrics CSV saved → X:\file\FAST_API\CKD-Ensemble-Classifier\backend\models\rfe\evaluation_metrics.csv
+2026-04-15 23:51:37,371 [INFO] backend.ml_core.pipeline:
+  [9] Saving rfe models...
+2026-04-15 23:51:37,372 [INFO] backend.ml_core.pipeline:     Best: Random_Forest (AUC=1.0000)
+2026-04-15 23:51:37,732 [INFO] backend.ml_core.pipeline:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-04-15 23:51:37,733 [INFO] backend.ml_core.pipeline:   VARIANT: BORUTA (21 features)
+2026-04-15 23:51:37,733 [INFO] backend.ml_core.pipeline: ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-04-15 23:51:37,739 [INFO] backend.ml_core.pipeline:
+  [7] Training 8 models on boruta...
+2026-04-15 23:51:37,739 [INFO] backend.ml_core.train: ============================================================
+2026-04-15 23:51:37,739 [INFO] backend.ml_core.train: TRAINING ALL ENSEMBLE MODELS
+2026-04-15 23:51:37,739 [INFO] backend.ml_core.train: ============================================================
+2026-04-15 23:51:37,740 [INFO] backend.ml_core.train:   Training Random Forest...
+2026-04-15 23:52:44,567 [INFO] backend.ml_core.train:     Best params: {'bootstrap': True, 'max_features': 'sqrt', 'min_samples_leaf': 2, 'min_samples_split': 4, 'n_estimators': 270}
+2026-04-15 23:52:44,568 [INFO] backend.ml_core.train:     Best CV score: 0.9978
+2026-04-15 23:52:44,568 [INFO] backend.ml_core.train:   ✓ Random_Forest trained successfully
+2026-04-15 23:52:44,568 [INFO] backend.ml_core.train:   Training AdaBoost...
+2026-04-15 23:52:55,774 [INFO] backend.ml_core.train:     Best params: {'n_estimators': 75, 'learning_rate': 1.0}
+2026-04-15 23:52:55,775 [INFO] backend.ml_core.train:     Best CV score: 0.9911
+2026-04-15 23:52:55,775 [INFO] backend.ml_core.train:   ✓ AdaBoost trained successfully
+2026-04-15 23:52:55,775 [INFO] backend.ml_core.train:   Training GBDT...
+2026-04-15 23:53:52,754 [INFO] backend.ml_core.train:     Best params: {'learning_rate': 0.03304614904851916, 'max_depth': 4, 'min_samples_leaf': 20, 'n_estimators': 306, 'subsample': 0.8282623055075649}
+2026-04-15 23:53:52,755 [INFO] backend.ml_core.train:     Best CV score: 0.9978
+2026-04-15 23:53:52,755 [INFO] backend.ml_core.train:   ✓ GBDT trained successfully
+2026-04-15 23:53:52,755 [INFO] backend.ml_core.train:   Training Voting (SVM + KNN)...
+2026-04-15 23:53:53,487 [INFO] backend.ml_core.train:     SVM best: {'C': 3.845401188473625, 'gamma': 'scale', 'kernel': 'linear'}
+2026-04-15 23:53:53,879 [INFO] backend.ml_core.train:     KNN best: {'algorithm': 'kd_tree', 'n_neighbors': 4, 'weights': 'distance'}
+2026-04-15 23:53:53,908 [INFO] backend.ml_core.train:   ✓ Voting_Soft trained successfully
+2026-04-15 23:53:53,909 [INFO] backend.ml_core.train:   Training XGBoost...
+2026-04-15 23:54:02,024 [INFO] backend.ml_core.train:     Best params: {'colsample_bytree': 0.610167650697638, 'learning_rate': 0.019710228429397403, 'max_depth': 8, 'min_child_weight': 1, 'n_estimators': 663, 'subsample': 0.8253102287905535}
+2026-04-15 23:54:02,025 [INFO] backend.ml_core.train:     Best CV score: 0.9911
+2026-04-15 23:54:02,025 [INFO] backend.ml_core.train:   ✓ XGBoost trained successfully
+2026-04-15 23:54:02,025 [INFO] backend.ml_core.train:   Training LightGBM...
+2026-04-15 23:54:11,742 [INFO] backend.ml_core.train:     Best params: {'colsample_bytree': 0.6225646316108401, 'learning_rate': 0.2, 'max_depth': 7, 'n_estimators': 485, 'num_leaves': 83, 'subsample': 0.996884623716487}
+2026-04-15 23:54:11,742 [INFO] backend.ml_core.train:     Best CV score: 0.9956
+2026-04-15 23:54:11,742 [INFO] backend.ml_core.train:   ✓ LightGBM trained successfully
+2026-04-15 23:54:11,742 [INFO] backend.ml_core.train:   Training Stacking (RF + SVM + KNN → LogReg meta)...
+2026-04-15 23:54:13,227 [INFO] backend.ml_core.train:     Stacking trained with 3 base estimators + LogReg meta-learner
+2026-04-15 23:54:13,227 [INFO] backend.ml_core.train:   ✓ Stacking trained successfully
+2026-04-15 23:54:13,228 [INFO] backend.ml_core.train:   Training Bagging (DecisionTree base)...
+2026-04-15 23:54:36,097 [INFO] backend.ml_core.train:     Best params: {'bootstrap': True, 'bootstrap_features': True, 'max_features': 0.6914634373768949, 'max_samples': 0.9858560476945519, 'n_estimators': 30}
+2026-04-15 23:54:36,098 [INFO] backend.ml_core.train:     Best CV score: 0.9933
+2026-04-15 23:54:36,098 [INFO] backend.ml_core.train:   ✓ Bagging trained successfully
+2026-04-15 23:54:36,098 [INFO] backend.ml_core.train:
+Total models trained: 8
+2026-04-15 23:54:36,099 [INFO] backend.ml_core.pipeline:
+  [8] Evaluating on test set...
+2026-04-15 23:54:36,100 [INFO] backend.ml_core.evaluate: Evaluating models on test set...
+2026-04-15 23:54:36,248 [INFO] backend.ml_core.evaluate:   Random_Forest: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:54:36,287 [INFO] backend.ml_core.evaluate:   AdaBoost: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:54:36,304 [INFO] backend.ml_core.evaluate:   GBDT: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:54:36,325 [INFO] backend.ml_core.evaluate:   Voting_Soft: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:54:36,359 [INFO] backend.ml_core.evaluate:   XGBoost: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:54:36,378 [INFO] backend.ml_core.evaluate:   LightGBM: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:54:36,484 [INFO] backend.ml_core.evaluate:   Stacking: Acc=1.0, Prec=1.0, Rec=1.0, F1=1.0, AUC=1.0
+2026-04-15 23:54:36,558 [INFO] backend.ml_core.evaluate:   Bagging: Acc=0.975, Prec=1.0, Rec=0.96, F1=0.9796, AUC=1.0
+2026-04-15 23:54:36,559 [INFO] backend.ml_core.evaluate: Generating confusion matrices...
+2026-04-15 23:54:36,796 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_Random_Forest.png
+2026-04-15 23:54:36,972 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_AdaBoost.png
+2026-04-15 23:54:37,144 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_GBDT.png
+2026-04-15 23:54:37,335 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_Voting_Soft.png
+2026-04-15 23:54:37,551 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_XGBoost.png
+2026-04-15 23:54:37,747 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_LightGBM.png
+2026-04-15 23:54:37,971 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_Stacking.png
+2026-04-15 23:54:38,307 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\cm_Bagging.png
+2026-04-15 23:54:38,307 [INFO] backend.ml_core.evaluate: Generating ROC curves...
+2026-04-15 23:54:38,752 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\roc_curves.png
+2026-04-15 23:54:38,752 [INFO] backend.ml_core.evaluate: Generating comparison bar charts...
+2026-04-15 23:54:38,947 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\comparison_accuracy.png
+2026-04-15 23:54:39,137 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\comparison_precision.png
+2026-04-15 23:54:39,326 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\comparison_recall.png
+2026-04-15 23:54:39,510 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\comparison_f1_score.png
+2026-04-15 23:54:39,692 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\comparison_auc_roc.png
+2026-04-15 23:54:39,961 [INFO] backend.ml_core.evaluate:   Saved X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots\boruta\comparison_all_metrics.png
+2026-04-15 23:54:39,965 [INFO] backend.ml_core.evaluate:   Metrics CSV saved → X:\file\FAST_API\CKD-Ensemble-Classifier\backend\models\boruta\evaluation_metrics.csv
+2026-04-15 23:54:39,966 [INFO] backend.ml_core.pipeline:
+  [9] Saving boruta models...
+2026-04-15 23:54:39,967 [INFO] backend.ml_core.pipeline:     Best: Random_Forest (AUC=1.0000)
+2026-04-15 23:54:40,338 [INFO] backend.ml_core.pipeline:
+[10/10] Saving combined summary...
+2026-04-15 23:54:40,346 [INFO] backend.ml_core.pipeline:
+============================================================
+2026-04-15 23:54:40,347 [INFO] backend.ml_core.pipeline:   PIPELINE COMPLETED SUCCESSFULLY
+2026-04-15 23:54:40,349 [INFO] backend.ml_core.pipeline: ============================================================
+2026-04-15 23:54:40,349 [INFO] backend.ml_core.pipeline:   all_features: 8 models, best=Random_Forest
+2026-04-15 23:54:40,349 [INFO] backend.ml_core.pipeline:   rfe: 8 models, best=Random_Forest
+2026-04-15 23:54:40,349 [INFO] backend.ml_core.pipeline:   boruta: 8 models, best=Random_Forest
+2026-04-15 23:54:40,349 [INFO] backend.ml_core.pipeline:   Artifacts: X:\file\FAST_API\CKD-Ensemble-Classifier\backend\models
+2026-04-15 23:54:40,350 [INFO] backend.ml_core.pipeline:   Plots: X:\file\FAST_API\CKD-Ensemble-Classifier\backend\plots
+2026-04-15 23:54:40,386 [INFO] backend.api.routers: ✓ Preprocessor loaded from X:\file\FAST_API\CKD-Ensemble-Classifier\backend\models\preprocessor.joblib
+2026-04-15 23:54:40,698 [INFO] backend.api.routers:   ✓ all_features: 8 models loaded (24 features, best=Random_Forest)
+2026-04-15 23:54:41,102 [INFO] backend.api.routers:   ✓ rfe: 8 models loaded (12 features, best=Random_Forest)
+2026-04-15 23:54:41,551 [INFO] backend.api.routers:   ✓ boruta: 8 models loaded (21 features, best=Random_Forest)
+2026-04-15 23:54:41,552 [INFO] backend.api.routers: Total: 3 variants, 24 models loaded
+
+
+
+
+
+
+The logs also confirm a key point from the paper regarding LightGBM:LightGBM trained in roughly 11 seconds.Random Forest took over 67 seconds.
+This confirms why the authors highlighted LightGBM as the most efficient "fast" learner for real-world medical applications where compilation time matters.

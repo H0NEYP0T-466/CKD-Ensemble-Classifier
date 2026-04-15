@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import type { PatientData, PredictionResponse } from '../services/api';
+import type { PatientData, PredictionResponse, Variant } from '../services/api';
 import type { FormFieldConfig } from '../types';
 import FormField from '../components/FormField';
 import RiskIndicator from '../components/RiskIndicator';
@@ -80,12 +81,16 @@ const initialFormData: Record<string, string> = {
 };
 
 const PredictionPage: React.FC = () => {
+  const { variant } = useParams<{ variant: string }>();
+  const navigate = useNavigate();
+  const currentVariant = (variant as Variant) || 'all_features';
+
   const [formData, setFormData] = useState<Record<string, string>>({ ...initialFormData });
   const [showResults, setShowResults] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null);
 
   const mutation = useMutation({
-    mutationFn: (data: PatientData) => apiService.predict(data),
+    mutationFn: (data: PatientData) => apiService.predict(currentVariant, data),
     onSuccess: (data) => {
       setPrediction(data);
       setShowResults(true);
@@ -137,11 +142,40 @@ const PredictionPage: React.FC = () => {
         <FormField key={field.name} field={field} value={formData[field.name]} onChange={handleInputChange} />
       ));
 
+  const variants = [
+    { id: 'all_features', label: 'All Features (24)' },
+    { id: 'rfe', label: 'RFE (12 Features)' },
+    { id: 'boruta', label: 'Boruta Features' },
+  ];
+
+  const variantLabels: Record<string, string> = {
+    all_features: 'All 24 Features',
+    rfe: 'RFE (Top 12 Features)',
+    boruta: 'Boruta Selected Features'
+  };
+
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>🔬 CKD Risk Prediction</h1>
-        <p>Enter patient clinical parameters to predict Chronic Kidney Disease risk</p>
+        <h1>🔬 CKD Risk Prediction ({variantLabels[currentVariant] || 'All Features'})</h1>
+        <p>Predict Chronic Kidney Disease risk using {variantLabels[currentVariant] || 'All Features'} models.</p>
+        
+        <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-xl)' }}>
+          {variants.map(v => (
+            <button
+              type="button"
+              key={v.id}
+              className={`btn ${currentVariant === v.id ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => {
+                navigate(`/predict/${v.id}`);
+                setShowResults(false);
+                setPrediction(null);
+              }}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="card">

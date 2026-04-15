@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import type { MetricsResponse, TrainResponse } from '../services/api';
+import type { VariantMetrics, TrainResponse, Variant } from '../services/api';
 import MetricsTable from '../components/MetricsTable';
 
 const AnalyticsPage: React.FC = () => {
-  const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
-  const [plots, setPlots] = useState<string[]>([]);
+  const { variant } = useParams<{ variant: string }>();
+  const navigate = useNavigate();
+  const currentVariant = (variant as Variant) || 'all_features';
+
+  const [metrics, setMetrics] = useState<VariantMetrics | null>(null);
+  const [featureSelection, setFeatureSelection] = useState<Record<string, string[]> | null>(null);
+  const [plots, setPlots] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [training, setTraining] = useState(false);
   const [trainResult, setTrainResult] = useState<TrainResponse | null>(null);
@@ -15,12 +21,16 @@ const AnalyticsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [metricsData, plotsList] = await Promise.all([
+      const [metricsData, allMetrics, plotsListData] = await Promise.all([
+        apiService.getVariantMetrics(currentVariant).catch(() => null),
         apiService.getMetrics().catch(() => null),
-        apiService.getPlotsList().catch(() => []),
+        apiService.getPlotsList().catch(() => ({ plots: {} })),
       ]);
       setMetrics(metricsData);
-      setPlots(plotsList);
+      if (allMetrics) {
+        setFeatureSelection(allMetrics.feature_selection);
+      }
+      setPlots(plotsListData.plots || {});
     } catch (err: any) {
       setError(err.message || 'Failed to fetch data');
     } finally {
@@ -30,7 +40,7 @@ const AnalyticsPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentVariant]);
 
   const handleTrain = async () => {
     if (!confirm('This will run the full ML training pipeline. It may take several minutes. Continue?')) {
@@ -51,10 +61,13 @@ const AnalyticsPage: React.FC = () => {
   };
 
   // Categorize plots
-  const kdePlots = plots.filter(p => p.includes('kde'));
-  const comparisonPlots = plots.filter(p => p.includes('comparison'));
-  const cmPlots = plots.filter(p => p.startsWith('cm_'));
-  const rocPlots = plots.filter(p => p.includes('roc'));
+  const variantPlots = plots[currentVariant] || [];
+  const sharedPlots = plots['shared'] || [];
+
+  const kdePlots = sharedPlots.filter(p => p.includes('kde'));
+  const comparisonPlots = variantPlots.filter(p => p.includes('comparison'));
+  const cmPlots = variantPlots.filter(p => p.startsWith('cm_'));
+  const rocPlots = variantPlots.filter(p => p.includes('roc'));
 
   const renderPlotLabel = (filename: string) => {
     return filename
@@ -65,14 +78,39 @@ const AnalyticsPage: React.FC = () => {
       .replace(/\b\w/g, c => c.toUpperCase());
   };
 
+  const variants = [
+    { id: 'all_features', label: 'All Features (24)' },
+    { id: 'rfe', label: 'RFE (12 Features)' },
+    { id: 'boruta', label: 'Boruta Features' },
+  ];
+  
+  const variantLabels: Record<string, string> = {
+    all_features: 'All 24 Features',
+    rfe: 'RFE (Top 12 Features)',
+    boruta: 'Boruta Selected Features'
+  };
+
   return (
     <div className="page-container">
       <div className="analytics-header">
         <div>
-          <h1>📊 Model Analytics Dashboard</h1>
+          <h1>📊 Model Analytics Dashboard ({variantLabels[currentVariant] || 'All Features'})</h1>
           <p className="subtitle">
-            Evaluation metrics and visualizations from the ensemble classifier pipeline
+            Evaluation metrics and visualizations for {variantLabels[currentVariant] || 'All Features'} models.
           </p>
+          
+          <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-md)' }}>
+            {variants.map(v => (
+              <button
+                type="button"
+                key={v.id}
+                className={`btn ${currentVariant === v.id ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => navigate(`/analytics/${v.id}`)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           className={`btn ${training ? 'btn-secondary' : 'btn-primary'}`}
@@ -129,30 +167,30 @@ const AnalyticsPage: React.FC = () => {
             <MetricsTable data={metrics.results} bestModel={metrics.best_model} />
           </div>
 
-          {/* Feature Selection Info */}
-          {metrics.feature_selection && metrics.feature_selection.rfe_features && (
+          {/* Feature Selection Info - Only display on main/all_features or if available globally */}
+          {featureSelection && featureSelection.rfe_features && (
             <div className="analytics-section">
               <h2 className="analytics-section-title">
-                <span className="dot" /> Feature Selection Results
+                <span className="dot" /> Global Feature Selection Status
               </h2>
               <div className="card">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xl)' }}>
                   <div>
                     <h4 style={{ color: 'var(--accent-primary)', marginBottom: 'var(--space-sm)' }}>
-                      RFE Features ({metrics.feature_selection.rfe_features?.length})
+                      RFE Features ({featureSelection.rfe_features?.length})
                     </h4>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {metrics.feature_selection.rfe_features?.map(f => (
+                      {featureSelection.rfe_features?.map(f => (
                         <span key={f} className="badge badge-info">{f}</span>
                       ))}
                     </div>
                   </div>
                   <div>
                     <h4 style={{ color: 'var(--accent-secondary)', marginBottom: 'var(--space-sm)' }}>
-                      Boruta Features ({metrics.feature_selection.boruta_features?.length})
+                      Boruta Features ({featureSelection.boruta_features?.length})
                     </h4>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {metrics.feature_selection.boruta_features?.map(f => (
+                      {featureSelection.boruta_features?.map(f => (
                         <span key={f} className="badge badge-success">{f}</span>
                       ))}
                     </div>
@@ -188,7 +226,7 @@ const AnalyticsPage: React.FC = () => {
               <div className="plots-grid">
                 {comparisonPlots.map(plot => (
                   <div key={plot} className={`plot-card ${plot.includes('all_metrics') ? 'plot-full-width' : ''}`}>
-                    <img src={apiService.getPlotUrl(plot)} alt={renderPlotLabel(plot)} loading="lazy" />
+                    <img src={apiService.getPlotUrl(plot, currentVariant)} alt={renderPlotLabel(plot)} loading="lazy" />
                     <div className="plot-label">{renderPlotLabel(plot)}</div>
                   </div>
                 ))}
@@ -205,7 +243,7 @@ const AnalyticsPage: React.FC = () => {
               <div className="plots-grid">
                 {rocPlots.map(plot => (
                   <div key={plot} className="plot-card plot-full-width">
-                    <img src={apiService.getPlotUrl(plot)} alt={renderPlotLabel(plot)} loading="lazy" />
+                    <img src={apiService.getPlotUrl(plot, currentVariant)} alt={renderPlotLabel(plot)} loading="lazy" />
                     <div className="plot-label">{renderPlotLabel(plot)}</div>
                   </div>
                 ))}
@@ -222,7 +260,7 @@ const AnalyticsPage: React.FC = () => {
               <div className="plots-grid">
                 {cmPlots.map(plot => (
                   <div key={plot} className="plot-card">
-                    <img src={apiService.getPlotUrl(plot)} alt={renderPlotLabel(plot)} loading="lazy" />
+                    <img src={apiService.getPlotUrl(plot, currentVariant)} alt={renderPlotLabel(plot)} loading="lazy" />
                     <div className="plot-label">{renderPlotLabel(plot)}</div>
                   </div>
                 ))}

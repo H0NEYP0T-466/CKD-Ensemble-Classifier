@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:8007';
 
+export type Variant = 'all_features' | 'rfe' | 'boruta';
+
 export interface PatientData {
   age: number | null;
   bp: number | null;
@@ -38,6 +40,8 @@ export interface SingleModelPrediction {
 }
 
 export interface PredictionResponse {
+  variant: string;
+  n_features: number;
   best_model_name: string;
   final_prediction: number;
   final_probability: number;
@@ -47,29 +51,49 @@ export interface PredictionResponse {
 
 export interface TrainResponse {
   status: string;
+  variants_trained: string[];
+  total_models: number;
+  variant_results: Record<string, {
+    n_features: number;
+    models_trained: string[];
+    best_model: string;
+  }>;
+}
+
+export interface VariantMetrics {
+  variant: string;
+  n_features: number;
+  features: string[];
+  results: Record<string, Record<string, number>>;
   best_model: string;
-  models_trained: string[];
-  evaluation_results: Record<string, Record<string, number>>;
-  plots_generated: string[];
 }
 
 export interface MetricsResponse {
-  results: Record<string, Record<string, number>>;
-  best_model: string;
+  variants: Record<string, {
+    features: string[];
+    n_features: number;
+    models_trained: string[];
+    evaluation_results: Record<string, Record<string, number>>;
+    best_model: string;
+  }>;
   feature_selection: Record<string, string[]>;
 }
 
 export interface HealthResponse {
   status: string;
-  model_loaded: boolean;
+  variants_loaded: string[];
+  total_models: number;
   preprocessor_loaded: boolean;
-  model_name: string | null;
+}
+
+export interface PlotsListResponse {
+  plots: Record<string, string[]>;
 }
 
 class ApiService {
   private client = axios.create({
     baseURL: API_URL,
-    timeout: 600000, // 10 min timeout for training
+    timeout: 600000,
     headers: { 'Content-Type': 'application/json' },
   });
 
@@ -78,8 +102,8 @@ class ApiService {
     return res.data;
   }
 
-  async predict(data: PatientData): Promise<PredictionResponse> {
-    const res = await this.client.post<PredictionResponse>('/predict', data);
+  async predict(variant: Variant, data: PatientData): Promise<PredictionResponse> {
+    const res = await this.client.post<PredictionResponse>(`/predict/${variant}`, data);
     return res.data;
   }
 
@@ -93,12 +117,20 @@ class ApiService {
     return res.data;
   }
 
-  async getPlotsList(): Promise<string[]> {
-    const res = await this.client.get<{ plots: string[] }>('/plots-list');
-    return res.data.plots;
+  async getVariantMetrics(variant: Variant): Promise<VariantMetrics> {
+    const res = await this.client.get<VariantMetrics>(`/metrics/${variant}`);
+    return res.data;
   }
 
-  getPlotUrl(filename: string): string {
+  async getPlotsList(): Promise<PlotsListResponse> {
+    const res = await this.client.get<PlotsListResponse>('/plots-list');
+    return res.data;
+  }
+
+  getPlotUrl(filename: string, variant?: string): string {
+    if (variant) {
+      return `${API_URL}/plots/${variant}/${filename}`;
+    }
     return `${API_URL}/plots/${filename}`;
   }
 }

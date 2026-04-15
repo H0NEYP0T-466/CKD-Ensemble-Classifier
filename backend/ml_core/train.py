@@ -1,6 +1,7 @@
 """
-Model training module implementing ensemble classifiers from the paper.
-Models: Random Forest, AdaBoost, GBDT, Voting (SVM+KNN), XGBoost, LightGBM.
+Model training module implementing ALL 8 ensemble classifiers from the paper.
+Models: Random Forest, AdaBoost, GBDT, Voting (SVM+KNN), XGBoost, LightGBM,
+        Stacking, Bagging.
 All use RandomizedSearchCV with exact hyperparameter grids from Table 3.
 """
 
@@ -13,10 +14,13 @@ from sklearn.ensemble import (
     AdaBoostClassifier,
     GradientBoostingClassifier,
     VotingClassifier,
+    BaggingClassifier,
+    StackingClassifier,
 )
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import randint, uniform
 
@@ -239,9 +243,87 @@ def _train_lightgbm(X_train, y_train) -> Tuple[Any, Dict]:
     return search.best_estimator_, search.best_params_
 
 
+def _train_stacking(X_train, y_train) -> Tuple[Any, Dict]:
+    """
+    Stacking (Stacked Generalization):
+    Base estimators: RF, SVM, KNN
+    Meta-learner: LogisticRegression
+    """
+    logger.info("  Training Stacking (RF + SVM + KNN → LogReg meta)...")
+
+    base_rf = RandomForestClassifier(
+        n_estimators=100, random_state=RANDOM_STATE, n_jobs=-1,
+    )
+    base_svm = SVC(
+        kernel='rbf', probability=True, random_state=RANDOM_STATE,
+    )
+    base_knn = KNeighborsClassifier(
+        n_neighbors=5, weights='distance',
+    )
+
+    stacking = StackingClassifier(
+        estimators=[
+            ('rf', base_rf),
+            ('svm', base_svm),
+            ('knn', base_knn),
+        ],
+        final_estimator=LogisticRegression(
+            max_iter=5000, random_state=RANDOM_STATE,
+        ),
+        cv=CV_FOLDS,
+        stack_method='predict_proba',
+        n_jobs=-1,
+    )
+    stacking.fit(X_train, y_train)
+
+    params = {
+        'base_estimators': ['RF(100)', 'SVM(rbf)', 'KNN(5,distance)'],
+        'meta_learner': 'LogisticRegression',
+        'cv': CV_FOLDS,
+    }
+    logger.info(f"    Stacking trained with 3 base estimators + LogReg meta-learner")
+
+    return stacking, params
+
+
+def _train_bagging(X_train, y_train) -> Tuple[Any, Dict]:
+    """
+    Bagging (Bootstrap Aggregating):
+    Base estimator: DecisionTree
+    """
+    logger.info("  Training Bagging (DecisionTree base)...")
+
+    param_dist = {
+        'n_estimators': list(range(10, 201, 10)),
+        'max_samples': uniform(0.5, 0.5),          # 0.5-1.0
+        'max_features': uniform(0.5, 0.5),          # 0.5-1.0
+        'bootstrap': [True],
+        'bootstrap_features': [True, False],
+    }
+
+    base_dt = DecisionTreeClassifier(random_state=RANDOM_STATE)
+    model = BaggingClassifier(
+        estimator=base_dt,
+        random_state=RANDOM_STATE,
+        n_jobs=-1,
+    )
+    search = RandomizedSearchCV(
+        model, param_dist,
+        n_iter=30, cv=CV_FOLDS,
+        random_state=RANDOM_STATE,
+        n_jobs=-1, scoring=SCORING,
+    )
+    search.fit(X_train, y_train)
+
+    logger.info(f"    Best params: {search.best_params_}")
+    logger.info(f"    Best CV score: {search.best_score_:.4f}")
+
+    return search.best_estimator_, search.best_params_
+
+
 def train_all_models(X_train, y_train) -> Dict[str, Any]:
     """
-    Train all 6 ensemble models.
+    Train all 8 ensemble models.
 
     Returns:
         Dict mapping model name → fitted model. Models that failed import
@@ -258,6 +340,8 @@ def train_all_models(X_train, y_train) -> Dict[str, Any]:
         'Voting_Soft': _train_voting,
         'XGBoost': _train_xgboost,
         'LightGBM': _train_lightgbm,
+        'Stacking': _train_stacking,
+        'Bagging': _train_bagging,
     }
 
     trained_models = {}

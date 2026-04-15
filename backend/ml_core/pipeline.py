@@ -1,15 +1,12 @@
 """
 Pipeline orchestrator — runs the complete ML pipeline end-to-end.
-Follows the exact order from Rahman et al., 2024:
-  1. Load & clean data
-  2. EDA KDE plots (on raw data)
-  3. Preprocess (impute → encode → scale)
-  4. Train/test split (90/10, stratified)
-  5. Borderline-SMOTE on training set only
-  6. Feature selection (RFE + Boruta) on training set
-  7. Train 6 models with RandomizedSearchCV
-  8. Evaluate on test set
-  9. Save artifacts
+Trains 3 variants: All Features (24), RFE (12), Boruta (confirmed).
+Each variant trains all 8 ensemble models.
+
+Fixes from paper replication:
+  - SMOTE: Use regular SMOTE as fallback if Borderline-SMOTE generates nothing
+  - Dataset: Load from ARFF to get all 400 rows
+  - Feature selection: RFE with LogisticRegression, Boruta with RF
 """
 
 import os
@@ -20,8 +17,8 @@ import joblib
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import BorderlineSMOTE
-from typing import Dict, Any
+from imblearn.over_sampling import BorderlineSMOTE, SMOTE
+from typing import Dict, Any, List, Tuple
 
 from .preprocess import (
     load_and_clean_csv,
@@ -48,9 +45,49 @@ DEFAULT_CSV = os.path.join(os.path.dirname(__file__), '..', 'dataset', 'chronic_
 DEFAULT_MODELS_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
 DEFAULT_PLOTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'plots')
 
+VARIANTS = ['all_features', 'rfe', 'boruta']
+
+
+def _apply_smote(X_train, y_train, random_state=42):
+    """
+    Apply Borderline-SMOTE with fallback to regular SMOTE.
+    Fixes the 'ghost' issue where Borderline-SMOTE generates 0 samples.
+    """
+    before_count = len(X_train)
+    minority_count = y_train.value_counts().min()
+
+    # Try Borderline-SMOTE first (paper method)
+    try:
+        k_val = min(5, minority_count - 1) if minority_count > 1 else 1
+        m_val = min(10, len(y_train) - 1) if len(y_train) > 1 else 1
+
+        bsmote = BorderlineSMOTE(
+            random_state=random_state,
+            k_neighbors=k_val,
+            m_neighbors=m_val,
+        )
+        X_res, y_res = bsmote.fit_resample(X_train, y_train)
+
+        if len(X_res) > before_count:
+            logger.info(f"  Borderline-SMOTE: {before_count} → {len(X_res)} samples")
+            logger.info(f"  Balanced dist: {pd.Series(y_res).value_counts().to_dict()}")
+            return X_res, y_res
+        else:
+            logger.warning(f"  Borderline-SMOTE generated 0 samples — falling back to SMOTE")
+    except Exception as e:
+        logger.warning(f"  Borderline-SMOTE failed ({e}) — falling back to SMOTE")
+
+    # Fallback: regular SMOTE
+    k_val = min(5, minority_count - 1) if minority_count > 1 else 1
+    smote = SMOTE(random_state=random_state, k_neighbors=k_val)
+    X_res, y_res = smote.fit_resample(X_train, y_train)
+    logger.info(f"  SMOTE (fallback): {before_count} → {len(X_res)} samples")
+    logger.info(f"  Balanced dist: {pd.Series(y_res).value_counts().to_dict()}")
+    return X_res, y_res
+
 
 class CKDPipeline:
-    """Complete CKD pipeline orchestrator."""
+    """Complete CKD pipeline orchestrator with 3 training variants."""
 
     def __init__(
         self,
@@ -69,19 +106,20 @@ class CKDPipeline:
 
     def run(self) -> Dict[str, Any]:
         """
-        Execute the full pipeline.
+        Execute the full pipeline for ALL 3 variants.
 
         Returns:
-            Dictionary with all results and paths to saved artifacts.
+            Combined summary dictionary.
         """
         logger.info("=" * 60)
         logger.info("  CKD ENSEMBLE CLASSIFIER — FULL PIPELINE")
+        logger.info("  Training 3 variants × 8 models = 24 models total")
         logger.info("=" * 60)
 
         # ──────────────────────────────────────────────────
         # Step 1: Load & clean
         # ──────────────────────────────────────────────────
-        logger.info("\n[1/9] Loading and cleaning data...")
+        logger.info("\n[1/10] Loading and cleaning data...")
         df = load_and_clean_csv(self.csv_path)
 
         y = df[TARGET_COL].copy()
@@ -93,8 +131,7 @@ class CKDPipeline:
         # ──────────────────────────────────────────────────
         # Step 2: EDA — KDE plots on raw numerical data
         # ──────────────────────────────────────────────────
-        logger.info("\n[2/9] Generating EDA KDE plots...")
-        # Convert numerical cols to float for KDE
+        logger.info("\n[2/10] Generating EDA KDE plots...")
         df_for_kde = df.copy()
         for col in NUMERICAL_COLS:
             if col in df_for_kde.columns:
@@ -104,12 +141,12 @@ class CKDPipeline:
         # ──────────────────────────────────────────────────
         # Step 3: Preprocess
         # ──────────────────────────────────────────────────
-        logger.info("\n[3/9] Preprocessing...")
+        logger.info("\n[3/10] Preprocessing...")
         preprocessor = CKDPreprocessor()
         X_processed = preprocessor.fit_transform(X)
         logger.info(f"  Processed shape: {X_processed.shape}")
 
-        # Save preprocessed dataset to dataset folder
+        # Save preprocessed dataset
         dataset_dir = os.path.dirname(self.csv_path)
         preprocessed_df = X_processed.copy()
         preprocessed_df[TARGET_COL] = y.values
@@ -117,10 +154,14 @@ class CKDPipeline:
         preprocessed_df.to_csv(preprocessed_path, index=False)
         logger.info(f"  Preprocessed dataset saved → {preprocessed_path}")
 
+        # Save preprocessor (shared across all variants)
+        preprocessor_path = os.path.join(self.models_dir, 'preprocessor.joblib')
+        preprocessor.save(preprocessor_path)
+
         # ──────────────────────────────────────────────────
-        # Step 4: Train/test split (90/10)
+        # Step 4: Train/test split (90/10, stratified)
         # ──────────────────────────────────────────────────
-        logger.info("\n[4/9] Train/test split (90/10, stratified)...")
+        logger.info("\n[4/10] Train/test split (90/10, stratified)...")
         X_train, X_test, y_train, y_test = train_test_split(
             X_processed, y,
             test_size=0.10,
@@ -132,23 +173,17 @@ class CKDPipeline:
         logger.info(f"  Test  class dist: {y_test.value_counts().to_dict()}")
 
         # ──────────────────────────────────────────────────
-        # Step 5: Borderline-SMOTE on training set
+        # Step 5: Borderline-SMOTE on training set (with fallback)
         # ──────────────────────────────────────────────────
-        logger.info("\n[5/9] Applying Borderline-SMOTE to training set...")
-        smote = BorderlineSMOTE(
-            random_state=self.random_state,
-            k_neighbors=5,
-            m_neighbors=10,
-            kind='borderline-1',
+        logger.info("\n[5/10] Applying SMOTE to training set...")
+        X_train_bal, y_train_bal = _apply_smote(
+            X_train, y_train, random_state=self.random_state,
         )
-        X_train_bal, y_train_bal = smote.fit_resample(X_train, y_train)
-        logger.info(f"  Before SMOTE: {len(X_train)} → After: {len(X_train_bal)}")
-        logger.info(f"  Balanced dist: {pd.Series(y_train_bal).value_counts().to_dict()}")
 
         # ──────────────────────────────────────────────────
         # Step 6: Feature selection (on balanced training set)
         # ──────────────────────────────────────────────────
-        logger.info("\n[6/9] Feature selection...")
+        logger.info("\n[6/10] Feature selection...")
 
         # RFE (top 12 features)
         rfe_features, rfe_obj = rfe_selection(
@@ -160,66 +195,90 @@ class CKDPipeline:
             X_train_bal, y_train_bal, random_state=self.random_state,
         )
 
-        # Use RFE features as primary (paper highlights RFE superiority)
-        selected_features = rfe_features
-        logger.info(f"  Using RFE features for training: {selected_features}")
+        all_features = list(X_processed.columns)
 
-        X_train_sel = apply_feature_selection(X_train_bal, selected_features)
-        X_test_sel = apply_feature_selection(X_test, selected_features)
+        feature_sets = {
+            'all_features': all_features,
+            'rfe': rfe_features,
+            'boruta': boruta_features,
+        }
 
-        # ──────────────────────────────────────────────────
-        # Step 7: Train all models
-        # ──────────────────────────────────────────────────
-        logger.info("\n[7/9] Training ensemble models...")
-        trained_models = train_all_models(X_train_sel, y_train_bal)
-
-        # ──────────────────────────────────────────────────
-        # Step 8: Evaluate on test set
-        # ──────────────────────────────────────────────────
-        logger.info("\n[8/9] Evaluating models...")
-        results = evaluate_models(trained_models, X_test_sel, y_test)
-
-        # Generate all plots
-        generate_confusion_matrices(trained_models, X_test_sel, y_test, self.plots_dir)
-        generate_roc_curves(trained_models, X_test_sel, y_test, self.plots_dir)
-        generate_bar_charts(results, self.plots_dir)
-        metrics_csv_path = save_metrics_csv(results, self.models_dir)
+        logger.info(f"  All features: {len(all_features)} features")
+        logger.info(f"  RFE features: {len(rfe_features)} → {rfe_features}")
+        logger.info(f"  Boruta features: {len(boruta_features)} → {boruta_features}")
 
         # ──────────────────────────────────────────────────
-        # Step 9: Save artifacts
+        # Steps 7-9: Train, Evaluate, Save for EACH variant
         # ──────────────────────────────────────────────────
-        logger.info("\n[9/9] Saving artifacts...")
+        all_results = {}
 
-        # Find best model by AUC-ROC
-        best_name = max(results, key=lambda k: results[k].get('auc_roc', 0))
-        best_model = trained_models[best_name]
-        logger.info(f"  Best model: {best_name} (AUC={results[best_name]['auc_roc']:.4f})")
+        for variant_name, selected_features in feature_sets.items():
+            logger.info("\n" + "━" * 60)
+            logger.info(f"  VARIANT: {variant_name.upper()} ({len(selected_features)} features)")
+            logger.info("━" * 60)
 
-        # Save preprocessor
-        preprocessor_path = os.path.join(self.models_dir, 'preprocessor.joblib')
-        preprocessor.save(preprocessor_path)
+            variant_models_dir = os.path.join(self.models_dir, variant_name)
+            variant_plots_dir = os.path.join(self.plots_dir, variant_name)
+            os.makedirs(variant_models_dir, exist_ok=True)
+            os.makedirs(variant_plots_dir, exist_ok=True)
 
-        # Save best model
-        best_model_path = os.path.join(self.models_dir, 'best_model.joblib')
-        joblib.dump(best_model, best_model_path)
-        logger.info(f"  Best model saved → {best_model_path}")
+            # Select features
+            X_train_sel = apply_feature_selection(X_train_bal, selected_features)
+            X_test_sel = apply_feature_selection(X_test, selected_features)
 
-        # Save selected features list
-        features_path = os.path.join(self.models_dir, 'selected_features.json')
-        with open(features_path, 'w') as f:
-            json.dump({
-                'rfe_features': rfe_features,
-                'boruta_features': boruta_features,
-                'selected_features': selected_features,
-            }, f, indent=2)
-        logger.info(f"  Features saved → {features_path}")
+            # [7] Train all 8 models
+            logger.info(f"\n  [7] Training 8 models on {variant_name}...")
+            trained_models = train_all_models(X_train_sel, y_train_bal)
 
-        # Save all trained models
-        for name, model in trained_models.items():
-            model_path = os.path.join(self.models_dir, f'model_{name}.joblib')
-            joblib.dump(model, model_path)
+            # [8] Evaluate on test set
+            logger.info(f"\n  [8] Evaluating on test set...")
+            results = evaluate_models(trained_models, X_test_sel, y_test)
 
-        # Summary
+            # Generate plots for this variant
+            generate_confusion_matrices(trained_models, X_test_sel, y_test, variant_plots_dir)
+            generate_roc_curves(trained_models, X_test_sel, y_test, variant_plots_dir)
+            generate_bar_charts(results, variant_plots_dir)
+            save_metrics_csv(results, variant_models_dir)
+
+            # [9] Save models
+            logger.info(f"\n  [9] Saving {variant_name} models...")
+
+            # Find best model for this variant
+            best_name = max(results, key=lambda k: results[k].get('auc_roc', 0))
+            best_model = trained_models[best_name]
+            logger.info(f"    Best: {best_name} (AUC={results[best_name]['auc_roc']:.4f})")
+
+            # Save best model
+            best_path = os.path.join(variant_models_dir, 'best_model.joblib')
+            joblib.dump(best_model, best_path)
+
+            # Save all models
+            for name, model in trained_models.items():
+                model_path = os.path.join(variant_models_dir, f'model_{name}.joblib')
+                joblib.dump(model, model_path)
+
+            # Save features list
+            features_path = os.path.join(variant_models_dir, 'features.json')
+            with open(features_path, 'w') as f:
+                json.dump({
+                    'variant': variant_name,
+                    'n_features': len(selected_features),
+                    'features': selected_features,
+                }, f, indent=2)
+
+            all_results[variant_name] = {
+                'features': selected_features,
+                'n_features': len(selected_features),
+                'models_trained': list(trained_models.keys()),
+                'evaluation_results': results,
+                'best_model': best_name,
+            }
+
+        # ──────────────────────────────────────────────────
+        # Step 10: Save combined summary
+        # ──────────────────────────────────────────────────
+        logger.info("\n[10/10] Saving combined summary...")
+
         summary = {
             'data_info': {
                 'n_samples': len(df),
@@ -231,22 +290,19 @@ class CKDPipeline:
                 'numerical_cols': NUMERICAL_COLS,
             },
             'feature_selection': {
+                'all_features': all_features,
                 'rfe_features': rfe_features,
                 'boruta_features': boruta_features,
-                'selected_features': selected_features,
             },
-            'models_trained': list(trained_models.keys()),
-            'evaluation_results': results,
-            'best_model': best_name,
-            'best_model_path': best_model_path,
-            'preprocessor_path': preprocessor_path,
-            'plots_dir': self.plots_dir,
+            'variants': all_results,
+            # For backward compat — use all_features variant as default
+            'best_model': all_results['all_features']['best_model'],
+            'models_trained': all_results['all_features']['models_trained'],
+            'evaluation_results': all_results['all_features']['evaluation_results'],
         }
 
-        # Save summary JSON
         summary_path = os.path.join(self.models_dir, 'pipeline_summary.json')
         with open(summary_path, 'w') as f:
-            # Convert numpy types for JSON serialization
             def default_serializer(obj):
                 if isinstance(obj, (np.integer,)):
                     return int(obj)
@@ -260,7 +316,9 @@ class CKDPipeline:
         logger.info("\n" + "=" * 60)
         logger.info("  PIPELINE COMPLETED SUCCESSFULLY")
         logger.info("=" * 60)
-        logger.info(f"  Best model: {best_name}")
+        for v_name, v_data in all_results.items():
+            logger.info(f"  {v_name}: {len(v_data['models_trained'])} models, "
+                         f"best={v_data['best_model']}")
         logger.info(f"  Artifacts: {self.models_dir}")
         logger.info(f"  Plots: {self.plots_dir}")
 

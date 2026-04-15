@@ -13,15 +13,14 @@ const Navbar: React.FC = () => {
         </div>
         <div className="navbar-links">
           <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            to="/predict/all_features"
+            className={({ isActive }) => `nav-link ${window.location.pathname.startsWith('/predict') ? 'active' : ''}`}
           >
             🔬 Prediction
           </NavLink>
           <NavLink
-            to="/analytics"
-            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            to="/analytics/all_features"
+            className={({ isActive }) => `nav-link ${window.location.pathname.startsWith('/analytics') ? 'active' : ''}`}
           >
             📊 Analytics
           </NavLink>

@@ -4,6 +4,14 @@ Pydantic schemas for FastAPI request/response validation.
 
 from pydantic import BaseModel, Field
 from typing import Dict, Optional, List
+from enum import Enum
+
+
+class VariantEnum(str, Enum):
+    """Feature selection variant for training/prediction."""
+    ALL_FEATURES = "all_features"
+    RFE = "rfe"
+    BORUTA = "boruta"
 
 
 class PatientInput(BaseModel):
@@ -55,7 +63,9 @@ class SingleModelPrediction(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """Response containing predictions from ALL trained models."""
+    """Response containing predictions from ALL trained models for a variant."""
+    variant: str = Field(..., description="Feature selection variant used")
+    n_features: int = Field(..., description="Number of features used")
     best_model_name: str = Field(..., description="Name of the best model")
     final_prediction: int = Field(..., description="Final verdict from best model: 0=No CKD, 1=CKD")
     final_probability: float = Field(..., ge=0, le=1, description="Probability from best model")
@@ -66,22 +76,29 @@ class PredictionResponse(BaseModel):
 class TrainResponse(BaseModel):
     """Response after training the pipeline."""
     status: str
-    best_model: str
-    models_trained: List[str]
-    evaluation_results: Dict[str, Dict[str, float]]
-    plots_generated: List[str]
+    variants_trained: List[str]
+    total_models: int
+    variant_results: Dict[str, Dict]
 
 
 class MetricsResponse(BaseModel):
     """Response for evaluation metrics."""
+    variants: Dict[str, Dict]
+    feature_selection: Dict[str, List[str]]
+
+
+class VariantMetricsResponse(BaseModel):
+    """Metrics for a single variant."""
+    variant: str
+    n_features: int
+    features: List[str]
     results: Dict[str, Dict[str, float]]
     best_model: str
-    feature_selection: Dict[str, List[str]]
 
 
 class HealthResponse(BaseModel):
     """Health check response."""
     status: str
-    model_loaded: bool
+    variants_loaded: List[str]
+    total_models: int
     preprocessor_loaded: bool
-    model_name: Optional[str] = None

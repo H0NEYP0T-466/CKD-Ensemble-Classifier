@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import PredictionPage from './pages/PredictionPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -10,8 +10,10 @@ function App() {
       <div className="app-layout">
         <Navbar />
         <Routes>
-          <Route path="/" element={<PredictionPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/" element={<Navigate to="/predict/all_features" replace />} />
+          <Route path="/predict/:variant" element={<PredictionPage />} />
+          <Route path="/analytics" element={<Navigate to="/analytics/all_features" replace />} />
+          <Route path="/analytics/:variant" element={<AnalyticsPage />} />
         </Routes>
         <footer className="app-footer">
           <p>
