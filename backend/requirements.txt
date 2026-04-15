@@ -1,0 +1,34 @@
+# Core ML and Data Processing
+numpy>=1.26.0,<2.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+scipy>=1.13.0
+
+# MICE Imputation (uses BayesianRidge from sklearn, no extra dep needed)
+
+# Feature Selection
+boruta>=0.3
+
+# Imbalanced Data Handling
+imbalanced-learn>=0.12.0
+
+# Gradient Boosting Libraries
+xgboost>=2.0.0
+lightgbm>=4.3.0
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Web Framework
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# Model Serialization
+joblib>=1.4.0
+
+# Data Validation
+pydantic>=2.7.0
+
+# CORS support (included with fastapi but explicit)
+python-multipart>=0.0.9

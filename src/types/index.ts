@@ -1,30 +1,28 @@
-
-
 export interface PatientData {
-  age: number;
-  bp: number;
-  sg: number;
-  al: number;
-  su: number;
-  rbc: 'normal' | 'abnormal';
-  pc: 'normal' | 'abnormal';
-  pcc: 'notpresent' | 'present';
-  ba: 'notpresent' | 'present';
-  bgr: number;
-  bu: number;
-  sc: number;
-  sod: number;
-  pot: number;
-  hemo: number;
-  pcv: number;
-  wc: number;
-  rc: number;
-  htn: 'yes' | 'no';
-  dm: 'yes' | 'no';
-  cad: 'yes' | 'no';
-  appet: 'good' | 'poor';
-  pe: 'yes' | 'no';
-  ane: 'yes' | 'no';
+  age: number | null;
+  bp: number | null;
+  sg: string;
+  al: string;
+  su: string;
+  rbc: string;
+  pc: string;
+  pcc: string;
+  ba: string;
+  bgr: number | null;
+  bu: number | null;
+  sc: number | null;
+  sod: number | null;
+  pot: number | null;
+  hemo: number | null;
+  pcv: number | null;
+  wbcc: number | null;
+  rbcc: number | null;
+  htn: string;
+  dm: string;
+  cad: string;
+  appet: string;
+  pe: string;
+  ane: string;
 }
 
 export interface PredictionResponse {
@@ -32,10 +30,11 @@ export interface PredictionResponse {
   probability: number;
   risk_level: 'Low' | 'Medium' | 'High';
   confidence: 'Low' | 'Medium' | 'High';
+  model_name: string;
 }
 
 export interface FormFieldConfig {
-  name: keyof PatientData;
+  name: string;
   label: string;
   type: 'number' | 'select';
   required?: boolean;
@@ -48,4 +47,14 @@ export interface FormFieldConfig {
 export interface RiskIndicatorProps {
   riskLevel: 'Low' | 'Medium' | 'High';
   confidence: 'Low' | 'Medium' | 'High';
+}
+
+export interface MetricsData {
+  [modelName: string]: {
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+    auc_roc: number;
+  };
 }
