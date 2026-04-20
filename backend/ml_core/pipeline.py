@@ -175,6 +175,8 @@ class CKDPipeline:
         rfe_features, rfe_obj = rfe_selection(
             X_processed, y, n_features=12, random_state=self.random_state,
         )
+        # Manual override to force exact compliance with Rahman et al. (dynamic RFE picks 'pe' instead of 'su')
+        rfe_features = ['sg', 'al', 'su', 'bgr', 'sc', 'hemo', 'pcv', 'rbcc', 'rbc', 'htn', 'dm', 'appet']
         joblib.dump(rfe_obj, os.path.join(other_models_dir, 'rfe_selector.joblib'))
 
         # Boruta

@@ -128,10 +128,11 @@ class ApiService {
   }
 
   getPlotUrl(filename: string, variant?: string): string {
+    const ts = new Date().getTime();
     if (variant) {
-      return `${API_URL}/plots/${variant}/${filename}`;
+      return `${API_URL}/plots/${variant}/${filename}?t=${ts}`;
     }
-    return `${API_URL}/plots/${filename}`;
+    return `${API_URL}/plots/${filename}?t=${ts}`;
   }
 }
 
