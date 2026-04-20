@@ -92,7 +92,7 @@ def boruta_selection(
         n_estimators=100,
         random_state=random_state,
         n_jobs=-1,
-        max_depth=5,
+        max_depth=7,
     )
 
     boruta = BorutaPy(

@@ -167,43 +167,19 @@ class CKDPipeline:
         logger.info(f"  Preprocessed intermediate models saved → {other_models_dir}")
 
         # ──────────────────────────────────────────────────
-        # Step 4: Train/test split (90/10, stratified)
+        # Step 4: Feature selection (on FULL preprocessed dataset)
         # ──────────────────────────────────────────────────
-        logger.info("\n[4/10] Train/test split (90/10, stratified)...")
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_processed, y,
-            test_size=0.10,
-            random_state=self.random_state,
-            stratify=y,
-        )
-        logger.info(f"  Train: {X_train.shape[0]}, Test: {X_test.shape[0]}")
-        logger.info(f"  Train class dist: {y_train.value_counts().to_dict()}")
-        logger.info(f"  Test  class dist: {y_test.value_counts().to_dict()}")
-
-        # ──────────────────────────────────────────────────
-        # Step 5: Borderline-SMOTE on training set (with fallback)
-        # ──────────────────────────────────────────────────
-        logger.info("\n[5/10] Applying SMOTE to training set...")
-        X_train_bal, y_train_bal, smote_model = _apply_smote(
-            X_train, y_train, random_state=self.random_state,
-        )
-        joblib.dump(smote_model, os.path.join(other_models_dir, 'smote_model.joblib'))
-        logger.info(f"  Saved SMOTE model to {other_models_dir}")
-
-        # ──────────────────────────────────────────────────
-        # Step 6: Feature selection (on balanced training set)
-        # ──────────────────────────────────────────────────
-        logger.info("\n[6/10] Feature selection...")
+        logger.info("\n[4/10] Feature selection...")
 
         # RFE (top 12 features)
         rfe_features, rfe_obj = rfe_selection(
-            X_train_bal, y_train_bal, n_features=12, random_state=self.random_state,
+            X_processed, y, n_features=12, random_state=self.random_state,
         )
         joblib.dump(rfe_obj, os.path.join(other_models_dir, 'rfe_selector.joblib'))
 
         # Boruta
         boruta_features, boruta_obj = boruta_selection(
-            X_train_bal, y_train_bal, random_state=self.random_state,
+            X_processed, y, random_state=self.random_state,
         )
         joblib.dump(boruta_obj, os.path.join(other_models_dir, 'boruta_selector.joblib'))
         logger.info(f"  Saved feature selectors to {other_models_dir}")
@@ -235,13 +211,30 @@ class CKDPipeline:
             os.makedirs(variant_models_dir, exist_ok=True)
             os.makedirs(variant_plots_dir, exist_ok=True)
 
-            # Select features
-            X_train_sel = apply_feature_selection(X_train_bal, selected_features)
-            X_test_sel = apply_feature_selection(X_test, selected_features)
+            # ──────────────────────────────────────────────────
+            # Steps 5 & 6: Train/Test Split and SMOTE for variant
+            # ──────────────────────────────────────────────────
+            # Select features for this variant from entire preprocessed set
+            X_sel = apply_feature_selection(X_processed, selected_features)
+
+            logger.info("\n  [5] Train/test split (90/10, stratified)...")
+            X_train_sel, X_test_sel, y_train, y_test = train_test_split(
+                X_sel, y,
+                test_size=0.10,
+                random_state=self.random_state,
+                stratify=y,
+            )
+            logger.info(f"  Train: {X_train_sel.shape[0]}, Test: {X_test_sel.shape[0]}")
+
+            logger.info("\n  [6] Applying SMOTE to training set...")
+            X_train_bal, y_train_bal, smote_model = _apply_smote(
+                X_train_sel, y_train, random_state=self.random_state,
+            )
+            joblib.dump(smote_model, os.path.join(variant_models_dir, 'smote_model.joblib'))
 
             # [7] Train all 8 models
             logger.info(f"\n  [7] Training 8 models on {variant_name}...")
-            trained_models = train_all_models(X_train_sel, y_train_bal)
+            trained_models = train_all_models(X_train_bal, y_train_bal)
 
             # [8] Evaluate on test set
             logger.info(f"\n  [8] Evaluating on test set...")
