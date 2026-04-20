@@ -28,23 +28,28 @@ def rfe_selection(
     Args:
         X: Preprocessed feature DataFrame
         y: Target Series
-        n_features: Number of features to select (paper uses 12)
+        n_features: Number of features to select (ignored, hardcoded to 12)
         random_state: Random seed
 
     Returns:
         Tuple of (selected feature names, fitted RFE object)
     """
-    logger.info(f"Running RFE selection (top {n_features} features)...")
+    logger.info(f"Running RFE selection (hardcoded to exactly 12 features)...")
 
+    # Base Estimator: Logistic Regression to evaluate linear coef_
+    # Do NOT use Random Forest or Decision Trees here.
     estimator = LogisticRegression(
         max_iter=5000,
         random_state=random_state,
         solver='lbfgs',
     )
 
+    # RFE wrapper
+    # n_features_to_select is hardcoded to 12
+    # step is 1 to eliminate the least important feature one by one
     rfe = RFE(
         estimator=estimator,
-        n_features_to_select=n_features,
+        n_features_to_select=12, 
         step=1,
     )
     rfe.fit(X, y)

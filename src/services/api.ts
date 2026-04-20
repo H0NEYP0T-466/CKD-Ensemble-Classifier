@@ -93,7 +93,7 @@ export interface PlotsListResponse {
 class ApiService {
   private client = axios.create({
     baseURL: API_URL,
-    timeout: 600000,
+    timeout: 60000000,
     headers: { 'Content-Type': 'application/json' },
   });
 

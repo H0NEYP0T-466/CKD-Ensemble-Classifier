@@ -71,7 +71,7 @@ def _apply_smote(X_train, y_train, random_state=42):
         if len(X_res) > before_count:
             logger.info(f"  Borderline-SMOTE: {before_count} → {len(X_res)} samples")
             logger.info(f"  Balanced dist: {pd.Series(y_res).value_counts().to_dict()}")
-            return X_res, y_res
+            return X_res, y_res, bsmote
         else:
             logger.warning(f"  Borderline-SMOTE generated 0 samples — falling back to SMOTE")
     except Exception as e:
@@ -83,7 +83,7 @@ def _apply_smote(X_train, y_train, random_state=42):
     X_res, y_res = smote.fit_resample(X_train, y_train)
     logger.info(f"  SMOTE (fallback): {before_count} → {len(X_res)} samples")
     logger.info(f"  Balanced dist: {pd.Series(y_res).value_counts().to_dict()}")
-    return X_res, y_res
+    return X_res, y_res, smote
 
 
 class CKDPipeline:
@@ -158,6 +158,14 @@ class CKDPipeline:
         preprocessor_path = os.path.join(self.models_dir, 'preprocessor.joblib')
         preprocessor.save(preprocessor_path)
 
+        # Explicitly save intermediate pieces to models/other
+        other_models_dir = os.path.join(self.models_dir, 'other')
+        os.makedirs(other_models_dir, exist_ok=True)
+        joblib.dump(preprocessor.mice_imputer, os.path.join(other_models_dir, 'mice_imputer.joblib'))
+        joblib.dump(preprocessor.scaler, os.path.join(other_models_dir, 'scaler.joblib'))
+        joblib.dump(preprocessor.ordinal_encoder, os.path.join(other_models_dir, 'ordinal_encoder.joblib'))
+        logger.info(f"  Preprocessed intermediate models saved → {other_models_dir}")
+
         # ──────────────────────────────────────────────────
         # Step 4: Train/test split (90/10, stratified)
         # ──────────────────────────────────────────────────
@@ -176,9 +184,11 @@ class CKDPipeline:
         # Step 5: Borderline-SMOTE on training set (with fallback)
         # ──────────────────────────────────────────────────
         logger.info("\n[5/10] Applying SMOTE to training set...")
-        X_train_bal, y_train_bal = _apply_smote(
+        X_train_bal, y_train_bal, smote_model = _apply_smote(
             X_train, y_train, random_state=self.random_state,
         )
+        joblib.dump(smote_model, os.path.join(other_models_dir, 'smote_model.joblib'))
+        logger.info(f"  Saved SMOTE model to {other_models_dir}")
 
         # ──────────────────────────────────────────────────
         # Step 6: Feature selection (on balanced training set)
@@ -189,11 +199,14 @@ class CKDPipeline:
         rfe_features, rfe_obj = rfe_selection(
             X_train_bal, y_train_bal, n_features=12, random_state=self.random_state,
         )
+        joblib.dump(rfe_obj, os.path.join(other_models_dir, 'rfe_selector.joblib'))
 
         # Boruta
         boruta_features, boruta_obj = boruta_selection(
             X_train_bal, y_train_bal, random_state=self.random_state,
         )
+        joblib.dump(boruta_obj, os.path.join(other_models_dir, 'boruta_selector.joblib'))
+        logger.info(f"  Saved feature selectors to {other_models_dir}")
 
         all_features = list(X_processed.columns)
 

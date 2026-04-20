@@ -21,6 +21,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import randint, uniform
 
@@ -267,9 +268,7 @@ def _train_stacking(X_train, y_train) -> Tuple[Any, Dict]:
             ('svm', base_svm),
             ('knn', base_knn),
         ],
-        final_estimator=LogisticRegression(
-            max_iter=5000, random_state=RANDOM_STATE,
-        ),
+        final_estimator=QuadraticDiscriminantAnalysis(reg_param=0.1),
         cv=CV_FOLDS,
         stack_method='predict_proba',
         n_jobs=-1,
@@ -278,10 +277,10 @@ def _train_stacking(X_train, y_train) -> Tuple[Any, Dict]:
 
     params = {
         'base_estimators': ['RF(100)', 'SVM(rbf)', 'KNN(5,distance)'],
-        'meta_learner': 'LogisticRegression',
+        'meta_learner': 'QuadraticDiscriminantAnalysis',
         'cv': CV_FOLDS,
     }
-    logger.info(f"    Stacking trained with 3 base estimators + LogReg meta-learner")
+    logger.info(f"    Stacking trained with 3 base estimators + QDA meta-learner")
 
     return stacking, params
 
