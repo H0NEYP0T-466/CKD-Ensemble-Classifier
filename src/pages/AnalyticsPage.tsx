@@ -135,16 +135,20 @@ const AnalyticsPage: React.FC = () => {
         </div>
       )}
 
-      {trainResult && (
-        <div className="card" style={{ borderColor: 'var(--accent-success)', marginBottom: 'var(--space-xl)' }}>
-          <p style={{ color: 'var(--accent-success)', fontWeight: 600 }}>
-            ✅ Training completed! Best model: {trainResult.best_model?.replace(/_/g, ' ')}
-          </p>
-          <p className="text-secondary" style={{ marginTop: 8, fontSize: '0.9rem' }}>
-            {trainResult.models_trained?.length} models trained, {trainResult.plots_generated?.length} plots generated.
-          </p>
-        </div>
-      )}
+      {trainResult && (() => {
+        const firstVariant = trainResult.variants_trained[0];
+        const firstResult = firstVariant ? trainResult.variant_results[firstVariant] : null;
+        return (
+          <div className="card" style={{ borderColor: 'var(--accent-success)', marginBottom: 'var(--space-xl)' }}>
+            <p style={{ color: 'var(--accent-success)', fontWeight: 600 }}>
+              ✅ Training completed! Best model: {firstResult?.best_model?.replace(/_/g, ' ')}
+            </p>
+            <p className="text-secondary" style={{ marginTop: 8, fontSize: '0.9rem' }}>
+              {trainResult.total_models} models trained across {trainResult.variants_trained.length} variants.
+            </p>
+          </div>
+        );
+      })()}
 
       {loading ? (
         <div className="empty-state">

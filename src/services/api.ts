@@ -64,7 +64,13 @@ export interface VariantMetrics {
   variant: string;
   n_features: number;
   features: string[];
-  results: Record<string, Record<string, number>>;
+  results: Record<string, {
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+    auc_roc: number;
+  }>;
   best_model: string;
 }
 
@@ -73,7 +79,13 @@ export interface MetricsResponse {
     features: string[];
     n_features: number;
     models_trained: string[];
-    evaluation_results: Record<string, Record<string, number>>;
+    evaluation_results: Record<string, {
+      accuracy: number;
+      precision: number;
+      recall: number;
+      f1_score: number;
+      auc_roc: number;
+    }>;
     best_model: string;
   }>;
   feature_selection: Record<string, string[]>;
