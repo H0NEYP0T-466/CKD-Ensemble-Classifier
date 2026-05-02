@@ -1,0 +1,61 @@
+name: ✨ Feature Request
+description: Propose an enhancement or new feature
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please describe your idea in detail.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🎯 Problem Statement
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: "I'm always frustrated when I need to manually retrain models after changing hyperparameters..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Proposed Solution
+      description: Describe the solution you'd like to see.
+      placeholder: "Add a configuration file for hyperparameters and a `/retrain` endpoint that reads from it..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternatives Considered
+      description: Describe any alternative solutions or features you've considered.
+      placeholder: "I considered adding a UI for hyperparameter tuning, but a config file is simpler for now."
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 📐 Scope
+      description: What's in scope and out of scope for this feature?
+      placeholder: |
+        **In scope:**
+        - Hyperparameter config file
+        - Retrain endpoint
+
+        **Out of scope:**
+        - AutoML hyperparameter search
+        - UI changes
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: ⚠️ Risks & Considerations
+      description: Any potential risks, breaking changes, or considerations.
+      placeholder: "Could affect existing training pipeline if config format changes."
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 💬 Additional Context
+      description: Any other context, mockups, or references.

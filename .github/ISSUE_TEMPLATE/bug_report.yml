@@ -1,0 +1,94 @@
+name: 🐛 Bug Report
+description: Report a reproducible problem
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 📋 Summary
+      description: A clear and concise description of what the bug is.
+      placeholder: "When I submit a prediction request, the API returns a 500 error..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔄 Steps to Reproduce
+      description: Steps to reproduce the behavior (numbered list).
+      placeholder: |
+        1. Start the backend server
+        2. Send POST request to /predict/all_features
+        3. With payload: {...}
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Expected Behavior
+      description: What you expected to happen.
+      placeholder: "The API should return a prediction result with confidence score."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: ❌ Actual Behavior
+      description: What actually happened.
+      placeholder: "The API returned a 500 Internal Server Error with traceback..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 🖥 Environment
+      description: Your environment details.
+      placeholder: |
+        - OS: Windows 10 / Ubuntu 22.04 / macOS 14
+        - Python version: 3.11.x
+        - Node version: 20.x
+        - Browser (if frontend): Chrome 120
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📜 Logs & Tracebacks
+      description: Paste any relevant log output or tracebacks.
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 📸 Screenshots
+      description: If applicable, add screenshots to help explain the problem.
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: ⚠️ Severity
+      description: How severe is this bug?
+      options:
+        - "🔴 Critical — System crash / data loss"
+        - "🟠 High — Major feature broken"
+        - "🟡 Medium — Feature partially broken, workaround exists"
+        - "🟢 Low — Minor issue / cosmetic"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 💬 Additional Context
+      description: Any other context about the problem.
