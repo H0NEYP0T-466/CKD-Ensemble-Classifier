@@ -34,7 +34,7 @@ def rfe_selection(
     Returns:
         Tuple of (selected feature names, fitted RFE object)
     """
-    logger.info(f"Running RFE selection (hardcoded to exactly 12 features)...")
+    logger.info(f"Running RFE selection...")
 
     # Base Estimator: Logistic Regression to evaluate linear coef_
     # Do NOT use Random Forest or Decision Trees here.

@@ -135,9 +135,28 @@ const PredictionPage: React.FC = () => {
   const cellFields = ['pcv', 'wbcc', 'rbcc'];
   const categoricalFields = ['rbc', 'pc', 'pcc', 'ba', 'htn', 'dm', 'cad', 'appet', 'pe', 'ane'];
 
+  const rfeFeatures = ['sg', 'al', 'su', 'bgr', 'sc', 'hemo', 'pcv', 'rbcc', 'rbc', 'htn', 'dm', 'appet'];
+  const borutaFeatures = [
+    'age', 'bp', 'bgr', 'bu', 'sc', 'sod', 'pot', 'hemo', 'pcv', 'wbcc', 'rbcc',
+    'sg', 'al', 'su', 'rbc', 'pc', 'htn', 'dm', 'appet', 'pe'
+  ];
+
+  const getActiveFieldsCount = (names: string[]) => {
+    return names.filter(name => {
+      if (currentVariant === 'rfe') return rfeFeatures.includes(name);
+      if (currentVariant === 'boruta') return borutaFeatures.includes(name);
+      return true;
+    }).length;
+  };
+
   const renderFieldGroup = (names: string[]) =>
     formFields
       .filter(f => names.includes(f.name))
+      .filter(f => {
+        if (currentVariant === 'rfe') return rfeFeatures.includes(f.name);
+        if (currentVariant === 'boruta') return borutaFeatures.includes(f.name);
+        return true;
+      })
       .map(field => (
         <FormField key={field.name} field={field} value={formData[field.name]} onChange={handleInputChange} />
       ));
@@ -187,30 +206,40 @@ const PredictionPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} id="prediction-form">
-          <div className="form-section">
-            <h3 className="section-title">Basic Metrics</h3>
-            <div className="form-grid">{renderFieldGroup(numericBasicFields)}</div>
-          </div>
+          {getActiveFieldsCount(numericBasicFields) > 0 && (
+            <div className="form-section">
+              <h3 className="section-title">Basic Metrics</h3>
+              <div className="form-grid">{renderFieldGroup(numericBasicFields)}</div>
+            </div>
+          )}
 
-          <div className="form-section">
-            <h3 className="section-title">Urinalysis (Nominal)</h3>
-            <div className="form-grid">{renderFieldGroup(nominalFields)}</div>
-          </div>
+          {getActiveFieldsCount(nominalFields) > 0 && (
+            <div className="form-section">
+              <h3 className="section-title">Urinalysis (Nominal)</h3>
+              <div className="form-grid">{renderFieldGroup(nominalFields)}</div>
+            </div>
+          )}
 
-          <div className="form-section">
-            <h3 className="section-title">Blood Test Results</h3>
-            <div className="form-grid">{renderFieldGroup(bloodFields)}</div>
-          </div>
+          {getActiveFieldsCount(bloodFields) > 0 && (
+            <div className="form-section">
+              <h3 className="section-title">Blood Test Results</h3>
+              <div className="form-grid">{renderFieldGroup(bloodFields)}</div>
+            </div>
+          )}
 
-          <div className="form-section">
-            <h3 className="section-title">Cell Counts</h3>
-            <div className="form-grid">{renderFieldGroup(cellFields)}</div>
-          </div>
+          {getActiveFieldsCount(cellFields) > 0 && (
+            <div className="form-section">
+              <h3 className="section-title">Cell Counts</h3>
+              <div className="form-grid">{renderFieldGroup(cellFields)}</div>
+            </div>
+          )}
 
-          <div className="form-section">
-            <h3 className="section-title">Clinical Observations</h3>
-            <div className="form-grid">{renderFieldGroup(categoricalFields)}</div>
-          </div>
+          {getActiveFieldsCount(categoricalFields) > 0 && (
+            <div className="form-section">
+              <h3 className="section-title">Clinical Observations</h3>
+              <div className="form-grid">{renderFieldGroup(categoricalFields)}</div>
+            </div>
+          )}
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={mutation.isPending} id="predict-btn">
