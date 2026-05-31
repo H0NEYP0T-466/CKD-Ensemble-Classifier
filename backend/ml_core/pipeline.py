@@ -251,10 +251,17 @@ class CKDPipeline:
             # [9] Save models
             logger.info(f"\n  [9] Saving {variant_name} models...")
 
-            # Find best model for this variant
-            best_name = max(results, key=lambda k: results[k].get('auc_roc', 0))
+            # Find best model for this variant using a multi-metric tie-breaker (AUC-ROC, then Accuracy, then F1-Score)
+            best_name = max(
+                results,
+                key=lambda k: (
+                    results[k].get('auc_roc', 0),
+                    results[k].get('accuracy', 0),
+                    results[k].get('f1_score', 0)
+                )
+            )
             best_model = trained_models[best_name]
-            logger.info(f"    Best: {best_name} (AUC={results[best_name]['auc_roc']:.4f})")
+            logger.info(f"    Best: {best_name} (AUC={results[best_name]['auc_roc']:.4f}, Acc={results[best_name]['accuracy']:.4f})")
 
             # Save best model
             best_path = os.path.join(variant_models_dir, 'best_model.joblib')
